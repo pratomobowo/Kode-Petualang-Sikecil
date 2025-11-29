@@ -5,7 +5,7 @@ import { Controls } from './components/Controls';
 import { Modal } from './components/Modal';
 import { Command, Direction, GameState, Position, TileType } from './types';
 import { getRoboHint, getWinMessage } from './services/geminiService';
-import { Rocket, Star, Volume2, VolumeX, BookOpen, Play, Home } from 'lucide-react';
+import { Rocket, Star, Volume2, VolumeX, BookOpen, Home } from 'lucide-react';
 
 const App: React.FC = () => {
   // Navigation State
@@ -270,7 +270,8 @@ const App: React.FC = () => {
         }}
         onHome={() => setCurrentLevelId(null)}
         onNextLevel={() => {
-           const nextId = currentLevelId + 1;
+           // Fixed null safety: default to 0 if currentLevelId is somehow null, though flow prevents it
+           const nextId = (currentLevelId || 0) + 1;
            const exists = LEVELS.find(l => l.id === nextId);
            if (exists) setCurrentLevelId(nextId);
            else {
