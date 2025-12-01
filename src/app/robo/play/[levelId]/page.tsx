@@ -9,6 +9,7 @@ import { Controls } from '@/components/Controls';
 import { Modal } from '@/components/Modal';
 import { useGameLogic } from '@/hooks/useGameLogic';
 import { BookOpen, Home, Star, Volume2, VolumeX } from 'lucide-react';
+import { TutorialModal } from '@/components/TutorialModal';
 import Link from 'next/link';
 
 export default function GamePage({ params }: { params: Promise<{ levelId: string }> }) {
@@ -18,6 +19,13 @@ export default function GamePage({ params }: { params: Promise<{ levelId: string
     const currentLevel = LEVELS.find(l => l.id === levelId);
 
     const [isMuted, setIsMuted] = useState(false);
+    const [showTutorial, setShowTutorial] = useState(false);
+
+    useEffect(() => {
+        if (levelId === 1) {
+            setShowTutorial(true);
+        }
+    }, [levelId]);
 
     const {
         playerPos,
@@ -117,6 +125,12 @@ export default function GamePage({ params }: { params: Promise<{ levelId: string
                         router.push('/robo/levels');
                     }
                 }}
+            />
+
+            {/* Tutorial Modal for Level 1 */}
+            <TutorialModal
+                isOpen={showTutorial}
+                onClose={() => setShowTutorial(false)}
             />
         </div>
     );
