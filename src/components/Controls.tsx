@@ -99,7 +99,6 @@ export const Controls: React.FC<ControlsProps> = ({
       <div className="order-3 md:order-3 flex flex-col md:grid md:grid-cols-4 gap-2 md:gap-3 w-20 md:w-auto">
         <button
           onClick={onReset}
-          disabled={isRunning}
           className="col-span-1 bg-gray-200 hover:bg-gray-300 text-gray-600 rounded-xl md:rounded-2xl p-2 md:p-4 flex items-center justify-center shadow-sm md:shadow-lg border-b-2 md:border-b-4 border-gray-300 active:border-b-0 active:translate-y-0.5 md:active:translate-y-1 transition-all h-10 md:h-auto"
         >
           <RotateCcw size={20} className="md:w-7 md:h-7" />
