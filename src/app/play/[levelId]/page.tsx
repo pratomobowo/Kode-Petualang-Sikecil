@@ -55,54 +55,54 @@ export default function GamePage({ params }: { params: Promise<{ levelId: string
     }
 
     return (
-        <div className="h-screen bg-sky-100 font-sans flex flex-col overflow-hidden">
+        <div className="h-screen md:h-auto md:min-h-screen bg-sky-100 font-sans flex flex-col overflow-hidden md:overflow-auto">
             {/* Header */}
-            <header className="bg-white shadow-sm p-3 flex-shrink-0 flex justify-between items-center z-40">
+            <header className="bg-white shadow-sm p-3 md:p-4 flex-shrink-0 flex justify-between items-center z-40 sticky top-0">
                 <div className="flex items-center gap-3">
                     <Link
                         href="/levels"
                         className="bg-gray-100 hover:bg-gray-200 p-2 rounded-xl text-gray-600 transition-colors"
                     >
-                        <BookOpen size={20} />
+                        <BookOpen size={20} className="md:w-6 md:h-6" />
                     </Link>
                     <div>
-                        <h1 className="text-lg font-bold text-gray-800 leading-none">{currentLevel.name} <span className="text-gray-400 text-xs font-normal">#{currentLevel.id}</span></h1>
-                        <div className="flex gap-1 text-xs text-gray-500 items-center mt-0.5">
+                        <h1 className="text-lg md:text-xl font-bold text-gray-800 leading-none">{currentLevel.name} <span className="text-gray-400 text-xs md:text-sm font-normal">#{currentLevel.id}</span></h1>
+                        <div className="flex gap-1 text-xs md:text-sm text-gray-500 items-center mt-0.5 md:mt-1">
                             <span className="flex items-center gap-1 bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">
-                                <Home size={10} /> Pulang
+                                <Home size={10} className="md:w-3 md:h-3" /> Pulang
                             </span>
                             {currentLevel.minStarsToWin > 0 && (
                                 <span className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full font-bold">
-                                    <Star size={10} /> {currentLevel.minStarsToWin}
+                                    <Star size={10} className="md:w-3 md:h-3" /> {currentLevel.minStarsToWin}
                                 </span>
                             )}
                         </div>
                     </div>
                 </div>
                 <button onClick={() => setIsMuted(!isMuted)} className="text-gray-400 hover:text-gray-600">
-                    {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                    {isMuted ? <VolumeX size={20} className="md:w-6 md:h-6" /> : <Volume2 size={20} className="md:w-6 md:h-6" />}
                 </button>
             </header>
 
             {/* Main Content */}
-            <main className="flex-grow flex flex-col md:flex-row overflow-hidden relative max-w-6xl mx-auto w-full">
+            <main className="flex-grow flex flex-col md:flex-row overflow-hidden md:overflow-visible relative max-w-6xl mx-auto w-full md:p-8 md:gap-8 md:items-start">
 
                 {/* Game Area */}
-                <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-y-auto w-full">
-                    <div className="w-full max-w-[85vw] md:max-w-md aspect-square shrink-0">
+                <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-0 overflow-y-auto md:overflow-visible w-full">
+                    <div className="w-full max-w-[85vw] md:max-w-lg aspect-square shrink-0">
                         <Grid level={currentLevel} playerPos={playerPos} collectedStars={collectedStars} />
                     </div>
 
-                    <div className="mt-4 bg-white/80 backdrop-blur-sm p-3 rounded-xl shadow-sm w-full max-w-md border-l-4 border-blue-400 text-sm hidden md:block">
-                        <h4 className="font-bold text-gray-700 mb-0.5 flex items-center gap-2">
-                            <span className="text-lg">💡</span> Misi:
+                    <div className="mt-4 md:mt-6 bg-white/80 md:bg-white backdrop-blur-sm p-3 md:p-6 rounded-xl md:rounded-2xl shadow-sm w-full max-w-md md:max-w-lg border-l-4 border-blue-400 text-sm md:text-base hidden md:block">
+                        <h4 className="font-bold text-gray-700 mb-0.5 md:mb-2 flex items-center gap-2">
+                            <span className="text-lg md:text-2xl">💡</span> Misi:
                         </h4>
-                        <p className="text-gray-600 leading-tight">{currentLevel.description}</p>
+                        <p className="text-gray-600 leading-tight md:leading-normal">{currentLevel.description}</p>
                     </div>
                 </div>
 
-                {/* Controls Sidebar - Fixed Bottom on Mobile */}
-                <div className="flex-shrink-0 w-full md:w-96 bg-white md:bg-transparent p-4 rounded-t-3xl md:rounded-none shadow-[0_-5px_20px_rgba(0,0,0,0.1)] md:shadow-none z-30">
+                {/* Controls Sidebar - Fixed Bottom on Mobile, Normal on Desktop */}
+                <div className="flex-shrink-0 w-full md:w-96 bg-white md:bg-transparent p-4 md:p-0 rounded-t-3xl md:rounded-none shadow-[0_-5px_20px_rgba(0,0,0,0.1)] md:shadow-none z-30 md:z-auto">
                     <Controls
                         onAddCommand={addCommand}
                         onRun={runCommands}
@@ -127,14 +127,9 @@ export default function GamePage({ params }: { params: Promise<{ levelId: string
                 }}
                 onHome={() => router.push('/levels')}
                 onNextLevel={() => {
-                    // Find next level
-                    const nextId = (currentLevel.id || 0) + 1;
-                    const exists = LEVELS.find(l => l.id === nextId);
-
-                    if (exists) {
-                        router.push(`/play/${nextId}`);
+                    if (currentLevel.id < LEVELS.length) {
+                        router.push(`/play/${currentLevel.id + 1}`);
                     } else {
-                        // Game Completed
                         router.push('/levels');
                     }
                 }}
