@@ -1,4 +1,4 @@
-// ZzFX - Zuper Zmall Zound Zynth - Micro Edition
+// ZzFX - Zuper Zmall Zound Zynth - v1.2.0
 // MIT License - Copyright 2019 Frank Force
 // https://github.com/KilledByAPixel/ZzFX
 
@@ -57,16 +57,24 @@ export const zzfx = (...parameters: (number | undefined)[]) => {
 
         tm += startFrequency;
         let s = Math.sin(tm * shapeCurve);
-        let k = Math.abs(s);
 
         // Apply shape
-        s = shape === 0 ? s :
-            shape === 1 ? sign(s) :
-                shape === 2 ? (k > 1 ? sign(s) : s) :
-                    shape === 3 ? sign(s) * (1 - k) :
-                        Math.sin(tm);
+        // 0: Sine, 1: Triangle, 2: Sawtooth, 3: Tan, 4: Noise
+        if (shape === 1) {
+            s = sign(s); // Square/Triangle-ish
+        } else if (shape === 2) {
+            s = (tm % PI2) / PI2 * 2 - 1; // Sawtooth
+        } else if (shape === 3) {
+            s = Math.tan(tm); // Tan
+        } else if (shape === 4) {
+            s = Math.random() * 2 - 1; // Noise
+        }
 
-        s = s * volume * (1 - bitCrush + bitCrush * Math.sin(t * PI2 * modulation / R)) * (
+        // Apply modulation and bit crush
+        s = s * volume * (1 - bitCrush + bitCrush * Math.sin(t * PI2 * modulation / R));
+
+        // Apply Envelope
+        s *= (
             i < attack ? i / attack :
                 i < attack + decay ? 1 - ((i - attack) / decay) * (1 - sustainVolume) :
                     i < attack + decay + sustain ? sustainVolume :
@@ -89,13 +97,14 @@ export const zzfx = (...parameters: (number | undefined)[]) => {
 
 // Sound Presets
 export const SOUNDS = {
-    MOVE: [1.0, 0, 130.8, 0, .1, 0, 1, 0.6, 0, 0, 0, 0, 0, .5], // Short blip
-    ROTATE: [0.5, 0, 200, 0, .05, 0, 1, 1.8, 0, 0, 0, 0, 0, .1], // Quieter blip
-    COLLECT: [1.2, 0, 1046, 0, .1, .2, 1, 1.8, 0, 0, 0, 0, 0, 0], // High pitched chime
-    WIN: [1.5, 0, 523.2, .1, .5, .4, 2, 2.5, 0, 0, 0, 0, .1, 0], // Fanfare-ish
-    LOSE: [1.0, 0, 100, .1, .5, .5, 3, 3, 0, 0, 0, 0, 0, 2], // Low buzz
-    BUMP: [1.0, 0, 150, .05, .1, .1, 3, 1, -5, 0, 0, 0, 0, 5], // Dissonant noise
-    CLICK: [0.5, 0, 1500, 0, .01, 0, 1, 1, 0, 0, 0, 0, 0, 5], // Click
+    // Volume, Randomness, Freq, Attack, Sustain, Release, Shape, ShapeCurve, Slide, DeltaSlide, PitchJump, PitchJumpTime, RepeatTime
+    MOVE: [1.0, 0, 220, 0, .05, .05, 0, 1, 0, 0, 0, 0, 0], // Simple Sine Blip
+    ROTATE: [0.5, 0, 300, 0, .05, .05, 0, 1, 0, 0, 0, 0, 0], // Higher Sine Blip
+    COLLECT: [1.2, 0, 880, 0, .1, .3, 1, 1, 0, 0, 0, 0, 0], // Square/Chime
+    WIN: [1.0, 0, 440, 0, .2, .5, 2, 1, .1, 0, 0, 0, 0], // Sawtooth Fanfare
+    LOSE: [1.0, 0, 150, .1, .2, .5, 4, 1, -1, 0, 0, 0, 0], // Noise Decay
+    BUMP: [1.0, 0, 100, .01, .1, .2, 4, 1, 0, 0, 0, 0, 0], // Short Noise
+    CLICK: [0.5, 0, 1000, 0, .01, .01, 4, 1, 0, 0, 0, 0, 0], // Tiny Click
 };
 
 export const playSound = (soundName: keyof typeof SOUNDS, isMuted: boolean = false) => {
