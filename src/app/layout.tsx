@@ -22,6 +22,7 @@ export default function RootLayout({
     <html lang="id">
       <body
         className={`${fredoka.variable} antialiased`}
+        suppressHydrationWarning
       >
         {children}
       </body>
