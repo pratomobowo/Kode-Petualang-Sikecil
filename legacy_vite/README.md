@@ -6,18 +6,18 @@
 
 Aplikasi pembelajaran coding interaktif untuk anak-anak. Belajar berpikir kritis sambil bermain!
 
-**Sekarang menggunakan Next.js 15!**
+View your app in AI Studio: https://ai.studio/apps/drive/10tceSpGRPJoC2mA-Byfn3d0EKkaZ3JV0
 
 ## 🚀 Run Locally
 
-**Prerequisites:** Node.js 20+
+**Prerequisites:** Node.js 18+
 
 1. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Set the `NEXT_PUBLIC_GEMINI_API_KEY` in `.env.local`:
+2. Set the `VITE_GEMINI_API_KEY` in `.env.local`:
    ```bash
    cp .env.example .env.local
    # Edit .env.local and add your Gemini API key
@@ -34,7 +34,7 @@ Aplikasi pembelajaran coding interaktif untuk anak-anak. Belajar berpikir kritis
 
 ```bash
 npm run build
-npm start
+npm run preview
 ```
 
 ## 🚢 Deploy to Coolify (Nixpacks)
@@ -43,7 +43,7 @@ This project is ready to deploy to Coolify with Nixpacks!
 
 ### Steps:
 
-1. **Push your code to GitHub**
+1. **Push your code to GitHub** (already done ✅)
 
 2. **In Coolify Dashboard:**
    - Create a new application
@@ -51,7 +51,7 @@ This project is ready to deploy to Coolify with Nixpacks!
    - Choose this repository
    - Select "Nixpacks" as build pack
    - Set environment variable:
-     - `NEXT_PUBLIC_GEMINI_API_KEY` = your Gemini API key
+     - `VITE_GEMINI_API_KEY` = your Gemini API key
 
 3. **Deploy!** 🎉
 
@@ -64,12 +64,13 @@ This project is ready to deploy to Coolify with Nixpacks!
 
 ## 🛠️ Tech Stack
 
-- **Framework:** Next.js 15 (App Router)
 - **Frontend:** React 19 + TypeScript
 - **Styling:** Tailwind CSS v4
+- **Build Tool:** Vite 6
 - **AI:** Google Gemini API
 - **Icons:** Lucide React
 
 ## 📝 License
 
 Private project for educational purposes.
+
