@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { Command, LevelConfig, Position } from "../types";
+import { Command, LevelConfig, Position, TileType } from "../types";
 
 // Initialize Gemini
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
