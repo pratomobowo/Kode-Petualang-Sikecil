@@ -42,7 +42,7 @@ export const zzfx = (...parameters: (number | undefined)[]) => {
 
     // Generate waveform
     let b = [], t = 0, tm = 0, i = 0, n = 1;
-    let length = zzfxR * (attack + decay + sustain + release + delay | 0);
+    let length = zzfxR * (attack + decay + sustain + release + delay) | 0;
 
     for (; i < length; b[i++] = n) {
         if (!(++t % (100 * repeatTime | 0))) {
