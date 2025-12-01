@@ -46,6 +46,7 @@ export const useGameLogic = (initialLevel: LevelConfig, isMuted: boolean = false
         setCurrentCommandIndex(-1);
         setModalMessage('');
         setHintMessage('');
+        playSound('CLICK', isMuted);
     };
 
     const addCommand = (direction: Direction) => {
