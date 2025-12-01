@@ -97,7 +97,7 @@ export default function LevelsPage() {
                         return (
                             <Link
                                 key={lvl.id}
-                                href={`/play/${lvl.id}`}
+                                href={`/robo/play/${lvl.id}`}
                                 className={`
                     group relative rounded-3xl p-5 text-left transition-all border-4 
                     flex flex-col h-full min-h-[140px] justify-between
@@ -110,13 +110,13 @@ export default function LevelsPage() {
                     })}
                 </div>
 
-                {/* Back to Splash Button */}
+                {/* Back to Game Selection Button */}
                 <Link
-                    href="/"
+                    href="/games"
                     className="mt-8 bg-white/10 hover:bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full font-bold transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
                 >
                     <Home size={20} />
-                    Kembali ke Menu Utama
+                    Kembali ke Pilihan Game
                 </Link>
 
                 <div className="mt-6 text-xs opacity-50 font-medium">

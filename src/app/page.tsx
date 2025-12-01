@@ -53,7 +53,7 @@ export default function SplashPage() {
 
         {/* Play Button */}
         <Link
-          href="/levels"
+          href="/games"
           className="group relative bg-white text-purple-600 px-12 py-6 rounded-full text-2xl font-black shadow-2xl hover:shadow-3xl transform hover:scale-110 active:scale-95 transition-all duration-300 flex items-center gap-4 mx-auto overflow-hidden w-fit"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-yellow-300 to-pink-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

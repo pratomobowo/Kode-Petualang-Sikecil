@@ -35,7 +35,7 @@ export default function GamePage({ params }: { params: Promise<{ levelId: string
     } = useGameLogic(currentLevel || LEVELS[0], isMuted);
 
     if (!currentLevel) {
-        return <div className="p-8 text-center">Level tidak ditemukan! <Link href="/levels" className="text-blue-500 underline">Kembali</Link></div>;
+        return <div className="p-8 text-center">Level tidak ditemukan! <Link href="/robo/levels" className="text-blue-500 underline">Kembali</Link></div>;
     }
 
     return (
@@ -44,7 +44,7 @@ export default function GamePage({ params }: { params: Promise<{ levelId: string
             <header className="bg-white shadow-sm p-3 md:p-4 flex-shrink-0 flex justify-between items-center z-40 sticky top-0">
                 <div className="flex items-center gap-3">
                     <Link
-                        href="/levels"
+                        href="/robo/levels"
                         className="bg-gray-100 hover:bg-gray-200 p-2 rounded-xl text-gray-600 transition-colors"
                     >
                         <BookOpen size={20} className="md:w-6 md:h-6" />
@@ -109,12 +109,12 @@ export default function GamePage({ params }: { params: Promise<{ levelId: string
                     setGameState(GameState.PLAYING);
                     resetLevel();
                 }}
-                onHome={() => router.push('/levels')}
+                onHome={() => router.push('/robo/levels')}
                 onNextLevel={() => {
                     if (currentLevel.id < LEVELS.length) {
-                        router.push(`/play/${currentLevel.id + 1}`);
+                        router.push(`/robo/play/${currentLevel.id + 1}`);
                     } else {
-                        router.push('/levels');
+                        router.push('/robo/levels');
                     }
                 }}
             />
