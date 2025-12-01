@@ -127,7 +127,7 @@ const ControlButton: React.FC<{ dir: Direction, icon: React.ReactNode, color: st
     onClick={onClick}
     disabled={disabled}
     className={`
-      aspect-video rounded-xl flex items-center justify-center shadow-md border-b-4 active:border-b-0 active:translate-y-1 transition-all
+      aspect-square md:aspect-video rounded-xl flex items-center justify-center shadow-md border-b-4 active:border-b-0 active:translate-y-1 transition-all
       ${disabled ? 'bg-gray-200 border-gray-300 opacity-50' : 'bg-white border-blue-200 hover:bg-blue-50 text-brand-blue'}
     `}
   >

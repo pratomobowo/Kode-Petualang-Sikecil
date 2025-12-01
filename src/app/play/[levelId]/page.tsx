@@ -102,7 +102,7 @@ export default function GamePage({ params }: { params: Promise<{ levelId: string
                 </div>
 
                 {/* Controls Sidebar - Fixed Bottom on Mobile, Normal on Desktop */}
-                <div className="flex-shrink-0 w-full md:w-96 bg-white md:bg-transparent p-4 md:p-0 rounded-t-3xl md:rounded-none shadow-[0_-5px_20px_rgba(0,0,0,0.1)] md:shadow-none z-30 md:z-auto">
+                <div className="flex-shrink-0 w-full md:w-96 bg-white md:bg-transparent p-2 pb-1 md:p-0 shadow-[0_-5px_20px_rgba(0,0,0,0.1)] md:shadow-none z-30 md:z-auto">
                     <Controls
                         onAddCommand={addCommand}
                         onRun={runCommands}
