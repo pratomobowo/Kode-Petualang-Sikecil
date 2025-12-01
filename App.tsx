@@ -10,9 +10,10 @@ import { Rocket, Star, Volume2, VolumeX, BookOpen, Play, Home, Lock } from 'luci
 
 const App: React.FC = () => {
   // Navigation State
+  const [showSplash, setShowSplash] = useState<boolean>(true);
   const [currentLevelId, setCurrentLevelId] = useState<number | null>(null);
   const [maxUnlockedLevel, setMaxUnlockedLevel] = useState<number>(1);
-  
+
   // Game Logic State
   const [playerPos, setPlayerPos] = useState<Position>({ x: 0, y: 0 });
   const [commands, setCommands] = useState<Command[]>([]);
@@ -77,7 +78,7 @@ const App: React.FC = () => {
   // The Game Loop (Execution)
   const runCommands = useCallback(async () => {
     if (!currentLevel) return;
-    
+
     setGameState(GameState.RUNNING);
     isRunningRef.current = true;
     resetLevel();
@@ -104,13 +105,13 @@ const App: React.FC = () => {
       if (next.x < 0 || next.x >= currentLevel.gridSize || next.y < 0 || next.y >= currentLevel.gridSize) {
         failed = true;
         failureReason = "Robot menabrak dinding batas area.";
-      } 
+      }
       // Check Obstacles
       else if (currentLevel.layout[next.y][next.x] === TileType.WALL) {
         failed = true;
         failureReason = "Robot menabrak batu besar.";
-      } 
-      
+      }
+
       if (failed) {
         break;
       }
@@ -149,7 +150,7 @@ const App: React.FC = () => {
         setGameState(GameState.WON);
         const msg = await getWinMessage(collectedStarsRef.current.length);
         setModalMessage(msg);
-        
+
         // Unlock next level
         if (currentLevel.id >= maxUnlockedLevel) {
           const nextLevel = currentLevel.id + 1;
@@ -167,30 +168,93 @@ const App: React.FC = () => {
       setModalMessage("Robot belum sampai di rumah.");
       setHintMessage(await getRoboHint(currentLevel, commands, "Robot berhenti di tengah jalan.", finalPos));
     }
-    
+
     isRunningRef.current = false;
   }, [commands, currentLevel, maxUnlockedLevel]);
 
 
-  // -- RENDER: MENU --
+  // -- RENDER: SPLASH SCREEN --
+  if (showSplash) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex flex-col items-center justify-center p-4 text-white font-sans relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 opacity-30 animate-bounce-slow"><Rocket size={120} className="text-yellow-300" /></div>
+          <div className="absolute bottom-32 right-16 opacity-30 animate-pulse-slow"><Star size={100} className="text-pink-300" /></div>
+          <div className="absolute top-1/3 right-1/4 opacity-20 animate-bounce-slow" style={{ animationDelay: '1s' }}><Star size={80} className="text-blue-300" /></div>
+          <div className="absolute bottom-1/4 left-1/4 opacity-20 animate-pulse-slow" style={{ animationDelay: '0.5s' }}><Rocket size={90} className="text-green-300" /></div>
+        </div>
+
+        {/* Main Content */}
+        <div className="z-10 text-center max-w-2xl px-6">
+          {/* Logo/Title */}
+          <div className="mb-8 animate-bounce-slow">
+            <div className="inline-block bg-white/10 backdrop-blur-md rounded-full p-8 mb-6 shadow-2xl">
+              <Rocket size={80} className="text-yellow-300" />
+            </div>
+          </div>
+
+          <h1 className="text-6xl md:text-8xl font-black mb-6 drop-shadow-2xl tracking-tight">
+            <span className="text-yellow-300">Kode</span>
+            <br />
+            <span className="text-white">Petualang</span>
+          </h1>
+
+          <p className="text-2xl md:text-3xl mb-4 font-bold opacity-90 drop-shadow-lg">
+            Belajar Berpikir Kritis 🧠
+          </p>
+
+          <p className="text-lg md:text-xl mb-12 opacity-80 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-2xl inline-block">
+            Petualangan seru untuk belajar coding sambil bermain!
+          </p>
+
+          {/* Play Button */}
+          <button
+            onClick={() => setShowSplash(false)}
+            className="group relative bg-white text-purple-600 px-12 py-6 rounded-full text-2xl font-black shadow-2xl hover:shadow-3xl transform hover:scale-110 active:scale-95 transition-all duration-300 flex items-center gap-4 mx-auto overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-300 to-pink-300 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <Play size={32} className="relative z-10 fill-current" />
+            <span className="relative z-10">MAIN SEKARANG</span>
+          </button>
+
+          {/* Progress Indicator */}
+          <div className="mt-8 text-sm font-bold bg-black/20 backdrop-blur-sm px-6 py-3 rounded-full inline-block">
+            🎯 Progres: Level {maxUnlockedLevel} / {LEVELS.length}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="absolute bottom-8 text-sm opacity-50 font-medium">
+          Dibuat untuk Liburan Sekolah • v1.2
+        </div>
+      </div>
+    );
+  }
+
+  // -- RENDER: LEVEL SELECTION --
   if (!currentLevel) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex flex-col items-center justify-center p-4 text-white font-sans overflow-y-auto custom-scroll">
         <div className="w-full max-w-5xl py-12 flex flex-col items-center">
-          
+
           {/* Decorative Elements */}
           <div className="absolute top-10 left-10 opacity-20 animate-bounce-slow pointer-events-none fixed"><Rocket size={80} /></div>
           <div className="absolute bottom-20 right-10 opacity-20 animate-pulse-slow pointer-events-none fixed"><Star size={60} /></div>
-          
+
           <div className="text-center z-10 max-w-2xl w-full mb-12">
-            <h1 className="text-5xl md:text-7xl font-black mb-4 drop-shadow-lg tracking-tight text-brand-yellow">
-              Kode<br/>Petualang
+            <h1 className="text-5xl md:text-7xl font-black mb-4 drop-shadow-lg tracking-tight text-yellow-300">
+              Pilih Level
             </h1>
-            <p className="text-xl mb-4 font-medium opacity-90 bg-white/10 p-4 rounded-xl backdrop-blur-sm inline-block">
-              Belajar berpikir kritis sambil bermain! 🚀
-            </p>
-            <div className="text-sm font-bold bg-black/20 px-4 py-2 rounded-full inline-block">
-              Progres: Level {maxUnlockedLevel} / {LEVELS.length}
+            <div className="mb-4">
+              <p className="text-xl font-medium opacity-90 bg-white/10 p-4 rounded-xl backdrop-blur-sm inline-block">
+                Pilih petualangan yang ingin kamu mainkan! 🎮
+              </p>
+            </div>
+            <div>
+              <div className="text-sm font-bold bg-black/20 backdrop-blur-sm px-6 py-3 rounded-full inline-block">
+                📊 Progres: Level {maxUnlockedLevel} / {LEVELS.length}
+              </div>
             </div>
           </div>
 
@@ -205,8 +269,8 @@ const App: React.FC = () => {
                   className={`
                     group relative rounded-3xl p-5 text-left transition-all border-4 
                     flex flex-col h-full min-h-[140px] justify-between
-                    ${isLocked 
-                      ? 'bg-gray-800/40 border-gray-600/50 cursor-not-allowed opacity-70 grayscale' 
+                    ${isLocked
+                      ? 'bg-gray-800/40 border-gray-600/50 cursor-not-allowed opacity-70 grayscale'
                       : 'bg-white/20 hover:bg-white/30 backdrop-blur-md border-white/40 hover:scale-105 active:scale-95 cursor-pointer shadow-lg'
                     }
                   `}
@@ -214,22 +278,22 @@ const App: React.FC = () => {
                   <div className="flex justify-between items-start mb-2">
                     <div className={`
                       w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-lg
-                      ${isLocked ? 'bg-gray-600 text-gray-400' : 'bg-brand-yellow text-brand-purple'}
+                      ${isLocked ? 'bg-gray-600 text-gray-400' : 'bg-yellow-300 text-purple-600'}
                     `}>
-                      {isLocked ? <Lock size={18}/> : lvl.id}
+                      {isLocked ? <Lock size={18} /> : lvl.id}
                     </div>
                     {/* Stars Requirement Indicator */}
                     <div className="flex gap-0.5">
-                       {Array.from({length: Math.max(1, lvl.minStarsToWin)}).map((_, i) => (
-                         <Star 
-                           key={i} 
-                           size={14} 
-                           className={lvl.minStarsToWin > 0 ? "fill-white/80 text-transparent" : "opacity-0"} 
-                         />
-                       ))}
+                      {Array.from({ length: Math.max(1, lvl.minStarsToWin) }).map((_, i) => (
+                        <Star
+                          key={i}
+                          size={14}
+                          className={lvl.minStarsToWin > 0 ? "fill-white/80 text-transparent" : "opacity-0"}
+                        />
+                      ))}
                     </div>
                   </div>
-                  
+
                   <div>
                     <h3 className={`text-lg font-bold leading-tight mb-1 ${isLocked ? 'text-gray-400' : 'text-white'}`}>
                       {lvl.name}
@@ -244,9 +308,18 @@ const App: React.FC = () => {
               );
             })}
           </div>
-          
-          <div className="mt-12 text-xs opacity-50 font-medium">
-             Dibuat untuk Liburan Sekolah • v1.1
+
+          {/* Back to Splash Button */}
+          <button
+            onClick={() => setShowSplash(true)}
+            className="mt-8 bg-white/10 hover:bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full font-bold transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+          >
+            <Home size={20} />
+            Kembali ke Menu Utama
+          </button>
+
+          <div className="mt-6 text-xs opacity-50 font-medium">
+            Dibuat untuk Liburan Sekolah • v1.2
           </div>
         </div>
       </div>
@@ -259,25 +332,25 @@ const App: React.FC = () => {
       {/* Header */}
       <header className="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-40">
         <div className="flex items-center gap-3">
-           <button 
-             onClick={() => setCurrentLevelId(null)}
-             className="bg-gray-100 hover:bg-gray-200 p-2 rounded-xl text-gray-600 transition-colors"
-           >
-             <BookOpen size={24} />
-           </button>
-           <div>
-             <h1 className="text-xl font-bold text-gray-800 leading-none">{currentLevel.name} <span className="text-gray-400 text-sm font-normal">#{currentLevel.id}</span></h1>
-             <div className="flex gap-1 text-sm text-gray-500 items-center mt-1">
-                <span className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">
-                   <Home size={12}/> Pulang
+          <button
+            onClick={() => setCurrentLevelId(null)}
+            className="bg-gray-100 hover:bg-gray-200 p-2 rounded-xl text-gray-600 transition-colors"
+          >
+            <BookOpen size={24} />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold text-gray-800 leading-none">{currentLevel.name} <span className="text-gray-400 text-sm font-normal">#{currentLevel.id}</span></h1>
+            <div className="flex gap-1 text-sm text-gray-500 items-center mt-1">
+              <span className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-bold">
+                <Home size={12} /> Pulang
+              </span>
+              {currentLevel.minStarsToWin > 0 && (
+                <span className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-bold">
+                  <Star size={12} /> Ambil {currentLevel.minStarsToWin}
                 </span>
-                {currentLevel.minStarsToWin > 0 && (
-                  <span className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-bold">
-                    <Star size={12}/> Ambil {currentLevel.minStarsToWin}
-                  </span>
-                )}
-             </div>
-           </div>
+              )}
+            </div>
+          </div>
         </div>
         <button onClick={() => setIsMuted(!isMuted)} className="text-gray-400 hover:text-gray-600">
           {isMuted ? <VolumeX /> : <Volume2 />}
@@ -286,13 +359,13 @@ const App: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-grow p-4 md:p-8 flex flex-col md:flex-row gap-6 max-w-6xl mx-auto w-full items-start justify-center">
-        
+
         {/* Game Area */}
         <div className="flex-grow flex flex-col items-center justify-center w-full max-w-lg mx-auto md:mx-0">
           <div className="relative w-full">
             <Grid level={currentLevel} playerPos={playerPos} collectedStars={collectedStars} />
           </div>
-          
+
           <div className="mt-6 bg-white p-4 rounded-2xl shadow-sm w-full border-l-4 border-blue-400">
             <h4 className="font-bold text-gray-700 mb-1 flex items-center gap-2">
               <span className="text-2xl">💡</span> Misi:
@@ -302,7 +375,7 @@ const App: React.FC = () => {
         </div>
 
         {/* Controls Sidebar */}
-        <Controls 
+        <Controls
           onAddCommand={addCommand}
           onRun={runCommands}
           onReset={resetLevel}
@@ -315,8 +388,8 @@ const App: React.FC = () => {
       </main>
 
       {/* Modals */}
-      <Modal 
-        gameState={gameState} 
+      <Modal
+        gameState={gameState}
         message={modalMessage}
         hint={hintMessage}
         onRetry={() => {
@@ -325,17 +398,17 @@ const App: React.FC = () => {
         }}
         onHome={() => setCurrentLevelId(null)}
         onNextLevel={() => {
-           // Find next level
-           const nextId = (currentLevelId || 0) + 1;
-           const exists = LEVELS.find(l => l.id === nextId);
-           
-           if (exists) {
-             setCurrentLevelId(nextId);
-           } else {
-             // Game Completed
-             setGameState(GameState.MENU);
-             setCurrentLevelId(null);
-           }
+          // Find next level
+          const nextId = (currentLevelId || 0) + 1;
+          const exists = LEVELS.find(l => l.id === nextId);
+
+          if (exists) {
+            setCurrentLevelId(nextId);
+          } else {
+            // Game Completed
+            setGameState(GameState.MENU);
+            setCurrentLevelId(null);
+          }
         }}
       />
     </div>
