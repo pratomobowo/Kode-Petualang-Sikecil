@@ -1,117 +1,92 @@
-// ZzFX - Zuper Zmall Zound Zynth - v1.2.0
-// MIT License - Copyright 2019 Frank Force
-// https://github.com/KilledByAPixel/ZzFX
+// Simple Sound Synthesizer using Standard Web Audio API
+// More robust than buffer-based approaches for simple beeps
 
-let zzfxV = 0.3; // Volume
-let zzfxX: AudioContext | undefined; // Audio Context
+let audioCtx: AudioContext | undefined;
 
-// Play a sound
-export const zzfx = (...parameters: (number | undefined)[]) => {
-    if (!zzfxX) zzfxX = new (window.AudioContext || (window as any).webkitAudioContext)();
-    let R = zzfxX.sampleRate; // Use actual sample rate
-
-    // Create oscillator
-    let [
-        volume = 1,
-        randomness = .05,
-        frequency = 220,
-        attack = 0,
-        sustain = 0,
-        release = .1,
-        shape = 0,
-        shapeCurve = 1,
-        slide = 0,
-        deltaSlide = 0,
-        pitchJump = 0,
-        pitchJumpTime = 0,
-        repeatTime = 0,
-        noise = 0,
-        modulation = 0,
-        bitCrush = 0,
-        delay = 0,
-        sustainVolume = 1,
-        decay = 0,
-        tremolo = 0
-    ] = parameters;
-
-    // Init parameters
-    let PI2 = Math.PI * 2;
-    let sign = (v: number) => v > 0 ? 1 : -1;
-    let startSlide = slide *= 500 * PI2 / R / R;
-    let startFrequency = frequency *= (1 + randomness * 2 * Math.random() - randomness) * PI2 / R;
-
-    // Generate waveform
-    let b = [], t = 0, tm = 0, i = 0, n = 1;
-    let length = R * (attack + decay + sustain + release + delay) | 0;
-
-    for (; i < length; b[i++] = n) {
-        if (!(++t % (100 * repeatTime | 0))) {
-            n = -n;
-            volume *= 1 - repeatTime;
-            frequency *= 1 + repeatTime;
-            startSlide *= 1 + repeatTime;
-        }
-
-        startSlide += deltaSlide *= 500 * PI2 / R / R / R;
-        startFrequency += startSlide += slide;
-
-        tm += startFrequency;
-        let s = Math.sin(tm * shapeCurve);
-
-        // Apply shape
-        // 0: Sine, 1: Triangle, 2: Sawtooth, 3: Tan, 4: Noise
-        if (shape === 1) {
-            s = sign(s); // Square/Triangle-ish
-        } else if (shape === 2) {
-            s = (tm % PI2) / PI2 * 2 - 1; // Sawtooth
-        } else if (shape === 3) {
-            s = Math.tan(tm); // Tan
-        } else if (shape === 4) {
-            s = Math.random() * 2 - 1; // Noise
-        }
-
-        // Apply modulation and bit crush
-        s = s * volume * (1 - bitCrush + bitCrush * Math.sin(t * PI2 * modulation / R));
-
-        // Apply Envelope
-        s *= (
-            i < attack ? i / attack :
-                i < attack + decay ? 1 - ((i - attack) / decay) * (1 - sustainVolume) :
-                    i < attack + decay + sustain ? sustainVolume :
-                        i < length - delay ? (length - i - delay) / release * sustainVolume :
-                            0
-        );
-
-        s = delay ? s / 2 + (delay > i ? 0 : (i < length - delay ? 1 : 0) * b[i - delay | 0] / 2) : s;
+const initAudio = () => {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    return audioCtx;
+};
 
-    // Play sound
-    let buffer = zzfxX.createBuffer(1, b.length, R);
-    buffer.getChannelData(0).set(b);
-    let source = zzfxX.createBufferSource();
-    source.buffer = buffer;
-    source.connect(zzfxX.destination);
-    source.start();
-    return source;
+type SoundType = 'sine' | 'square' | 'sawtooth' | 'triangle';
+
+interface SoundParams {
+    type: SoundType;
+    freq: number;
+    duration: number;
+    vol: number;
+    slide?: number; // Frequency slide in Hz
 }
 
-// Sound Presets
-export const SOUNDS = {
-    // Volume, Randomness, Freq, Attack, Sustain, Release, Shape, ShapeCurve, Slide, DeltaSlide, PitchJump, PitchJumpTime, RepeatTime
-    MOVE: [1.0, 0, 220, 0, .05, .05, 0, 1, 0, 0, 0, 0, 0], // Simple Sine Blip
-    ROTATE: [0.5, 0, 300, 0, .05, .05, 0, 1, 0, 0, 0, 0, 0], // Higher Sine Blip
-    COLLECT: [1.2, 0, 880, 0, .1, .3, 1, 1, 0, 0, 0, 0, 0], // Square/Chime
-    WIN: [1.0, 0, 440, 0, .2, .5, 2, 1, .1, 0, 0, 0, 0], // Sawtooth Fanfare
-    LOSE: [1.0, 0, 150, .1, .2, .5, 4, 1, -1, 0, 0, 0, 0], // Noise Decay
-    BUMP: [1.0, 0, 100, .01, .1, .2, 4, 1, 0, 0, 0, 0, 0], // Short Noise
-    CLICK: [0.5, 0, 1000, 0, .01, .01, 4, 1, 0, 0, 0, 0, 0], // Tiny Click
+export const SOUNDS: Record<string, SoundParams[]> = {
+    MOVE: [
+        { type: 'sine', freq: 300, duration: 0.1, vol: 0.3 }
+    ],
+    ROTATE: [
+        { type: 'sine', freq: 400, duration: 0.05, vol: 0.2 }
+    ],
+    COLLECT: [
+        { type: 'square', freq: 880, duration: 0.1, vol: 0.1 },
+        { type: 'square', freq: 1760, duration: 0.2, vol: 0.1 } // High ping
+    ],
+    WIN: [
+        { type: 'triangle', freq: 523.25, duration: 0.2, vol: 0.2 }, // C5
+        { type: 'triangle', freq: 659.25, duration: 0.2, vol: 0.2 }, // E5
+        { type: 'triangle', freq: 783.99, duration: 0.4, vol: 0.2 }, // G5
+        { type: 'triangle', freq: 1046.50, duration: 0.6, vol: 0.2 } // C6
+    ],
+    LOSE: [
+        { type: 'sawtooth', freq: 150, duration: 0.3, vol: 0.2, slide: -50 },
+        { type: 'sawtooth', freq: 100, duration: 0.4, vol: 0.2, slide: -50 }
+    ],
+    BUMP: [
+        { type: 'sawtooth', freq: 100, duration: 0.1, vol: 0.3, slide: -50 }
+    ],
+    CLICK: [
+        { type: 'triangle', freq: 800, duration: 0.05, vol: 0.1 }
+    ]
+};
+
+const playTone = (ctx: AudioContext, params: SoundParams, startTime: number) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = params.type;
+    osc.frequency.setValueAtTime(params.freq, startTime);
+
+    if (params.slide) {
+        osc.frequency.linearRampToValueAtTime(params.freq + params.slide, startTime + params.duration);
+    }
+
+    gain.gain.setValueAtTime(params.vol, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, startTime + params.duration);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(startTime);
+    osc.stop(startTime + params.duration);
 };
 
 export const playSound = (soundName: keyof typeof SOUNDS, isMuted: boolean = false) => {
     if (isMuted) return;
+
     try {
-        // @ts-ignore
-        zzfx(...SOUNDS[soundName]);
+        const ctx = initAudio();
+        const now = ctx.currentTime;
+        const sequence = SOUNDS[soundName];
+
+        let timeOffset = 0;
+        sequence.forEach(note => {
+            playTone(ctx, note, now + timeOffset);
+            timeOffset += note.duration * 0.8; // Overlap slightly
+        });
+
     } catch (e) {
         console.error("Audio play failed", e);
     }
