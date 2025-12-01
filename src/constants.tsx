@@ -537,10 +537,10 @@ export const LEVELS: LevelConfig[] = [
 ];
 
 export const ICONS = {
-  UP: <ArrowUp size={24} strokeWidth={3} />,
-  DOWN: <ArrowDown size={24} strokeWidth={3} />,
-  LEFT: <ArrowLeft size={24} strokeWidth={3} />,
-  RIGHT: <ArrowRight size={24} strokeWidth={3} />,
+  UP: <ArrowUp size={32} strokeWidth={3} />,
+  DOWN: <ArrowDown size={32} strokeWidth={3} />,
+  LEFT: <ArrowLeft size={32} strokeWidth={3} />,
+  RIGHT: <ArrowRight size={32} strokeWidth={3} />,
   HOME: <Home size={28} className="text-white fill-white" />,
   STAR: <Star size={24} className="text-yellow-400 fill-yellow-400 animate-pulse" />,
   WALL: <Hexagon size={28} className="text-gray-600 fill-gray-500" />,

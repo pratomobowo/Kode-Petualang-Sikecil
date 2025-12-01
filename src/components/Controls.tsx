@@ -65,26 +65,26 @@ export const Controls: React.FC<ControlsProps> = ({
       </div>
 
       {/* Program List */}
-      <div className="order-1 md:order-2 col-span-2 bg-white/90 rounded-2xl p-3 md:p-4 shadow-sm md:shadow-xl flex-grow flex flex-col min-h-[80px] md:min-h-[200px] border-b-4 border-yellow-200">
+      <div className="order-1 md:order-2 col-span-2 bg-white/90 rounded-2xl p-3 md:p-4 shadow-sm md:shadow-xl flex-grow flex flex-col min-h-[90px] md:min-h-[200px] border-b-4 border-yellow-200">
         <div className="flex justify-between items-center mb-1 md:mb-2">
-          <h3 className="font-bold text-gray-500 text-xs md:text-sm">Program ({commands.length}/{maxCommands})</h3>
+          <h3 className="font-bold text-gray-500 text-sm md:text-sm">Program ({commands.length}/{maxCommands})</h3>
           <button onClick={onClear} disabled={isRunning} className="text-red-400 hover:text-red-600 p-1">
-            <Trash2 size={16} className="md:w-5 md:h-5" />
+            <Trash2 size={20} className="md:w-5 md:h-5" />
           </button>
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-2 flex-grow overflow-x-auto md:overflow-y-auto md:overflow-x-hidden custom-scroll flex flex-row md:flex-col gap-2 items-center md:items-stretch">
+        <div className="bg-gray-50 rounded-xl p-2 flex-grow overflow-x-auto md:overflow-y-auto md:overflow-x-hidden custom-scroll flex flex-row md:flex-col gap-3 items-center md:items-stretch">
           {commands.length === 0 && (
-            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs md:text-sm text-center italic whitespace-nowrap md:whitespace-normal px-4">
+            <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm md:text-sm text-center italic whitespace-nowrap md:whitespace-normal px-4">
               Klik panah untuk mulai
             </div>
           )}
           {commands.map((cmd, idx) => (
-            <div key={cmd.id} className="flex-shrink-0 flex items-center gap-2 bg-white p-1.5 md:p-2 rounded-lg shadow-sm border border-gray-100 animate-in fade-in zoom-in duration-200">
-              <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-brand-yellow flex items-center justify-center text-[10px] md:text-xs font-bold text-white">
+            <div key={cmd.id} className="flex-shrink-0 flex items-center gap-2 bg-white p-2 md:p-2 rounded-lg shadow-sm border border-gray-100 animate-in fade-in zoom-in duration-200">
+              <div className="w-6 h-6 md:w-6 md:h-6 rounded-full bg-brand-yellow flex items-center justify-center text-xs md:text-xs font-bold text-white">
                 {idx + 1}
               </div>
-              <div className="text-gray-700 font-bold flex items-center gap-1 md:gap-2 text-xs md:text-sm whitespace-nowrap">
+              <div className="text-gray-700 font-bold flex items-center gap-1 md:gap-2 text-sm md:text-sm whitespace-nowrap">
                 {cmd.direction === Direction.UP && <span className="text-brand-blue flex items-center gap-1">{ICONS.UP} <span className="hidden md:inline">Atas</span></span>}
                 {cmd.direction === Direction.DOWN && <span className="text-brand-blue flex items-center gap-1">{ICONS.DOWN} <span className="hidden md:inline">Bawah</span></span>}
                 {cmd.direction === Direction.LEFT && <span className="text-brand-blue flex items-center gap-1">{ICONS.LEFT} <span className="hidden md:inline">Kiri</span></span>}
