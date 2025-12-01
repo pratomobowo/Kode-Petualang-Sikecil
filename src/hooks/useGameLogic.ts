@@ -1,166 +1,184 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { Command, Direction, GameState, Position, TileType, Level } from '../types';
+import { useState, useEffect, useCallback } from 'react';
+import { LevelConfig, Position, Direction, TileType, GameState, Command } from '../types';
+import { ICONS } from '../constants';
 import { getRoboHint, getWinMessage } from '../services/geminiService';
+import { playSound } from '../utils/sound';
 
-export const useGameLogic = (currentLevel: Level | undefined, maxUnlockedLevel: number, setMaxUnlockedLevel: (level: number) => void) => {
-    // Game Logic State
-    const [playerPos, setPlayerPos] = useState<Position>({ x: 0, y: 0 });
+export const useGameLogic = (initialLevel: LevelConfig, isMuted: boolean = false) => {
+    const [level, setLevel] = useState<LevelConfig>(initialLevel);
+    const [playerPos, setPlayerPos] = useState<Position>(initialLevel.startPos);
+    const [playerRotation, setPlayerRotation] = useState<number>(0); // 0: Up, 90: Right, 180: Down, 270: Left
     const [commands, setCommands] = useState<Command[]>([]);
     const [gameState, setGameState] = useState<GameState>(GameState.MENU);
     const [collectedStars, setCollectedStars] = useState<string[]>([]);
+    const [currentCommandIndex, setCurrentCommandIndex] = useState<number>(-1);
     const [modalMessage, setModalMessage] = useState<string>('');
     const [hintMessage, setHintMessage] = useState<string>('');
-    const [isMuted, setIsMuted] = useState(false);
 
-    // References for game loop
-    const playerPosRef = useRef(playerPos);
-    const collectedStarsRef = useRef(collectedStars);
-    const isRunningRef = useRef(false);
-
-    // Initialize level
+    // Reset state when level changes
     useEffect(() => {
-        if (currentLevel) {
-            setPlayerPos(currentLevel.startPos);
-            playerPosRef.current = currentLevel.startPos;
-            setCommands([]);
-            setCollectedStars([]);
-            collectedStarsRef.current = [];
-            setGameState(GameState.PLAYING);
-            setModalMessage('');
-            setHintMessage('');
-        }
-    }, [currentLevel]);
-
-    // Command handlers
-    const addCommand = (direction: Direction) => {
-        if (commands.length < (currentLevel?.maxCommands || 10)) {
-            const newCmd: Command = { id: Math.random().toString(36).substr(2, 9), direction };
-            setCommands(prev => [...prev, newCmd]);
-        }
-    };
-
-    const clearCommands = () => setCommands([]);
+        setLevel(initialLevel);
+        resetLevel();
+    }, [initialLevel]);
 
     const resetLevel = () => {
-        if (currentLevel) {
-            setPlayerPos(currentLevel.startPos);
-            playerPosRef.current = currentLevel.startPos;
-            setCollectedStars([]);
-            collectedStarsRef.current = [];
-            setGameState(GameState.PLAYING);
-        }
+        setPlayerPos(initialLevel.startPos);
+        setPlayerRotation(0);
+        setCollectedStars([]);
+        setGameState(GameState.PLAYING);
+        setCurrentCommandIndex(-1);
+        setModalMessage('');
+        setHintMessage('');
     };
 
-    // The Game Loop (Execution)
-    const runCommands = useCallback(async () => {
-        if (!currentLevel) return;
-
-        setGameState(GameState.RUNNING);
-        isRunningRef.current = true;
-        resetLevel();
-
-        // Small delay before starting
-        await new Promise(r => setTimeout(r, 500));
-
-        let failed = false;
-        let failureReason = '';
-
-        for (let i = 0; i < commands.length; i++) {
-            if (!isRunningRef.current) break; // Emergency stop
-
-            const cmd = commands[i];
-            const current = playerPosRef.current;
-            let next = { ...current };
-
-            if (cmd.direction === Direction.UP) next.y -= 1;
-            if (cmd.direction === Direction.DOWN) next.y += 1;
-            if (cmd.direction === Direction.LEFT) next.x -= 1;
-            if (cmd.direction === Direction.RIGHT) next.x += 1;
-
-            // Check Bounds
-            if (next.x < 0 || next.x >= currentLevel.gridSize || next.y < 0 || next.y >= currentLevel.gridSize) {
-                failed = true;
-                failureReason = "Robot menabrak dinding batas area.";
-            }
-            // Check Obstacles
-            else if (currentLevel.layout[next.y][next.x] === TileType.WALL) {
-                failed = true;
-                failureReason = "Robot menabrak batu besar.";
-            }
-
-            if (failed) {
-                break;
-            }
-
-            // Move Success
-            setPlayerPos(next);
-            playerPosRef.current = next;
-
-            // Check Collectibles
-            const tileType = currentLevel.layout[next.y][next.x];
-            if (tileType === TileType.STAR) {
-                const key = `${next.x},${next.y}`;
-                if (!collectedStarsRef.current.includes(key)) {
-                    const newStars = [...collectedStarsRef.current, key];
-                    setCollectedStars(newStars);
-                    collectedStarsRef.current = newStars;
-                }
-            }
-
-            // Wait for animation
-            await new Promise(r => setTimeout(r, 600));
+    const addCommand = (direction: Direction) => {
+        if (gameState !== GameState.PLAYING) return;
+        if (commands.length >= level.maxCommands) {
+            playSound('BUMP', isMuted);
+            return;
         }
 
-        // End Condition Check
-        const finalPos = playerPosRef.current;
-        const tileAtEnd = currentLevel.layout[finalPos.y][finalPos.x];
+        playSound('CLICK', isMuted);
+        const newCommand: Command = {
+            id: Math.random().toString(36).substr(2, 9),
+            direction,
+        };
+        setCommands([...commands, newCommand]);
+    };
 
-        if (failed) {
-            setGameState(GameState.LOST);
-            setModalMessage("Aduh! Robot tidak bisa lewat.");
-            const hint = await getRoboHint(currentLevel, commands, failureReason, finalPos);
-            setHintMessage(hint);
-        } else if (tileAtEnd === TileType.GOAL) {
-            if (collectedStarsRef.current.length >= currentLevel.minStarsToWin) {
-                // WIN CONDITION
-                setGameState(GameState.WON);
-                const msg = await getWinMessage(collectedStarsRef.current.length);
-                setModalMessage(msg);
+    const clearCommands = () => {
+        if (gameState !== GameState.PLAYING) return;
+        playSound('CLICK', isMuted);
+        setCommands([]);
+    };
 
-                // Unlock next level
-                if (currentLevel.id >= maxUnlockedLevel) {
-                    const nextLevel = currentLevel.id + 1;
-                    setMaxUnlockedLevel(nextLevel);
-                    localStorage.setItem('kode-petualang-level', nextLevel.toString());
+    const runCommands = () => {
+        if (commands.length === 0) return;
+        setGameState(GameState.RUNNING);
+        setCurrentCommandIndex(-1);
+        playSound('CLICK', isMuted);
+    };
+
+    // Game Loop
+    useEffect(() => {
+        if (gameState !== GameState.RUNNING) return;
+
+        let step = 0;
+        const interval = setInterval(async () => {
+            if (step >= commands.length) {
+                clearInterval(interval);
+                handleGameOver(false, "Yah, perintahnya sudah habis tapi belum sampai rumah.");
+                return;
+            }
+
+            setCurrentCommandIndex(step);
+            const cmd = commands[step];
+
+            // Calculate new position
+            let newPos = { ...playerPos };
+            let newRotation = playerRotation;
+
+            // Update rotation based on direction for visual flair
+            switch (cmd.direction) {
+                case Direction.UP: newRotation = 0; break;
+                case Direction.RIGHT: newRotation = 90; break;
+                case Direction.DOWN: newRotation = 180; break;
+                case Direction.LEFT: newRotation = 270; break;
+            }
+            setPlayerRotation(newRotation);
+
+            if (cmd.direction === Direction.UP) newPos.y -= 1;
+            if (cmd.direction === Direction.DOWN) newPos.y += 1;
+            if (cmd.direction === Direction.LEFT) newPos.x -= 1;
+            if (cmd.direction === Direction.RIGHT) newPos.x += 1;
+
+            // Check collisions
+            if (
+                newPos.x < 0 || newPos.x >= level.gridSize ||
+                newPos.y < 0 || newPos.y >= level.gridSize
+            ) {
+                clearInterval(interval);
+                playSound('BUMP', isMuted);
+                handleGameOver(false, "Aduh! Robo menabrak batas dunia!");
+                return;
+            }
+
+            const tile = level.layout[newPos.y][newPos.x];
+
+            if (tile === TileType.WALL) {
+                clearInterval(interval);
+                playSound('BUMP', isMuted);
+                handleGameOver(false, "Dug! Ada batu besar menghalangi jalan.");
+                return;
+            }
+
+            // Valid move
+            setPlayerPos(newPos);
+            playSound('MOVE', isMuted);
+
+            // Check collectibles
+            if (tile === TileType.STAR) {
+                const starKey = `${newPos.x},${newPos.y}`;
+                if (!collectedStars.includes(starKey)) {
+                    setCollectedStars(prev => [...prev, starKey]);
+                    playSound('COLLECT', isMuted);
                 }
+            }
 
-            } else {
-                setGameState(GameState.LOST);
-                setModalMessage(`Kamu butuh ${currentLevel.minStarsToWin} bintang lagi!`);
-                setHintMessage("Cari jalan yang melewati bintang ya!");
+            // Check Goal
+            if (tile === TileType.GOAL) {
+                clearInterval(interval);
+
+                // Hack: check if we JUST collected a star on this tile
+                const currentStarsCount = collectedStars.length;
+
+                if (currentStarsCount >= level.minStarsToWin) {
+                    handleGameOver(true, await getWinMessage(currentStarsCount));
+                } else {
+                    handleGameOver(false, `Yah! Kamu butuh ${level.minStarsToWin} bintang, tapi baru punya ${currentStarsCount}.`);
+                }
+                return;
+            }
+
+            step++;
+        }, 800); // Speed of steps
+
+        return () => clearInterval(interval);
+    }, [gameState, commands, playerPos, level, collectedStars, playerRotation, isMuted]);
+
+    const handleGameOver = async (win: boolean, message: string) => {
+        if (win) {
+            setGameState(GameState.WON);
+            playSound('WIN', isMuted);
+
+            // Update max unlocked level
+            const currentMax = parseInt(localStorage.getItem('kode-petualang-level') || '1');
+            if (level.id >= currentMax) {
+                localStorage.setItem('kode-petualang-level', (level.id + 1).toString());
             }
         } else {
             setGameState(GameState.LOST);
-            setModalMessage("Robot belum sampai di rumah.");
-            setHintMessage(await getRoboHint(currentLevel, commands, "Robot berhenti di tengah jalan.", finalPos));
+            playSound('LOSE', isMuted);
+            const hint = await getRoboHint(level, commands, message, playerPos);
+            setHintMessage(hint);
         }
-
-        isRunningRef.current = false;
-    }, [commands, currentLevel, maxUnlockedLevel, setMaxUnlockedLevel]);
+        setModalMessage(message);
+    };
 
     return {
+        level,
         playerPos,
+        playerRotation,
         commands,
         gameState,
         collectedStars,
+        currentCommandIndex,
         modalMessage,
         hintMessage,
-        isMuted,
-        setIsMuted,
-        setGameState,
         addCommand,
-        clearCommands,
+        runCommands,
         resetLevel,
-        runCommands
+        clearCommands,
+        setGameState,
     };
 };

@@ -17,22 +17,7 @@ export default function GamePage({ params }: { params: Promise<{ levelId: string
     const levelId = parseInt(resolvedParams.levelId, 10);
     const currentLevel = LEVELS.find(l => l.id === levelId);
 
-    const [maxUnlockedLevel, setMaxUnlockedLevel] = useState<number>(1);
-
-    useEffect(() => {
-        const savedProgress = localStorage.getItem('kode-petualang-level');
-        if (savedProgress) {
-            const level = parseInt(savedProgress, 10);
-            if (!isNaN(level)) {
-                setMaxUnlockedLevel(level);
-            }
-        }
-    }, []);
-
-    const handleSetMaxUnlockedLevel = (level: number) => {
-        setMaxUnlockedLevel(level);
-        localStorage.setItem('kode-petualang-level', level.toString());
-    };
+    const [isMuted, setIsMuted] = useState(false);
 
     const {
         playerPos,
@@ -41,14 +26,12 @@ export default function GamePage({ params }: { params: Promise<{ levelId: string
         collectedStars,
         modalMessage,
         hintMessage,
-        isMuted,
-        setIsMuted,
         setGameState,
         addCommand,
         clearCommands,
         resetLevel,
         runCommands
-    } = useGameLogic(currentLevel, maxUnlockedLevel, handleSetMaxUnlockedLevel);
+    } = useGameLogic(currentLevel || LEVELS[0], isMuted);
 
     if (!currentLevel) {
         return <div className="p-8 text-center">Level tidak ditemukan! <Link href="/levels" className="text-blue-500 underline">Kembali</Link></div>;
