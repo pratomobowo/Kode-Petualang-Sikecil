@@ -3,12 +3,12 @@
 // https://github.com/KilledByAPixel/ZzFX
 
 let zzfxV = 0.3; // Volume
-let zzfxR = 44100; // Sample Rate
 let zzfxX: AudioContext | undefined; // Audio Context
 
 // Play a sound
 export const zzfx = (...parameters: (number | undefined)[]) => {
     if (!zzfxX) zzfxX = new (window.AudioContext || (window as any).webkitAudioContext)();
+    let R = zzfxX.sampleRate; // Use actual sample rate
 
     // Create oscillator
     let [
@@ -37,12 +37,12 @@ export const zzfx = (...parameters: (number | undefined)[]) => {
     // Init parameters
     let PI2 = Math.PI * 2;
     let sign = (v: number) => v > 0 ? 1 : -1;
-    let startSlide = slide *= 500 * PI2 / zzfxR / zzfxR;
-    let startFrequency = frequency *= (1 + randomness * 2 * Math.random() - randomness) * PI2 / zzfxR;
+    let startSlide = slide *= 500 * PI2 / R / R;
+    let startFrequency = frequency *= (1 + randomness * 2 * Math.random() - randomness) * PI2 / R;
 
     // Generate waveform
     let b = [], t = 0, tm = 0, i = 0, n = 1;
-    let length = zzfxR * (attack + decay + sustain + release + delay) | 0;
+    let length = R * (attack + decay + sustain + release + delay) | 0;
 
     for (; i < length; b[i++] = n) {
         if (!(++t % (100 * repeatTime | 0))) {
@@ -52,7 +52,7 @@ export const zzfx = (...parameters: (number | undefined)[]) => {
             startSlide *= 1 + repeatTime;
         }
 
-        startSlide += deltaSlide *= 500 * PI2 / zzfxR / zzfxR / zzfxR;
+        startSlide += deltaSlide *= 500 * PI2 / R / R / R;
         startFrequency += startSlide += slide;
 
         tm += startFrequency;
@@ -66,7 +66,7 @@ export const zzfx = (...parameters: (number | undefined)[]) => {
                     shape === 3 ? sign(s) * (1 - k) :
                         Math.sin(tm);
 
-        s = s * volume * (1 - bitCrush + bitCrush * Math.sin(t * PI2 * modulation / zzfxR)) * (
+        s = s * volume * (1 - bitCrush + bitCrush * Math.sin(t * PI2 * modulation / R)) * (
             i < attack ? i / attack :
                 i < attack + decay ? 1 - ((i - attack) / decay) * (1 - sustainVolume) :
                     i < attack + decay + sustain ? sustainVolume :
@@ -78,7 +78,7 @@ export const zzfx = (...parameters: (number | undefined)[]) => {
     }
 
     // Play sound
-    let buffer = zzfxX.createBuffer(1, b.length, zzfxR);
+    let buffer = zzfxX.createBuffer(1, b.length, R);
     buffer.getChannelData(0).set(b);
     let source = zzfxX.createBufferSource();
     source.buffer = buffer;
