@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { LevelConfig, Position, Direction, TileType, GameState, Command } from '../types';
 import { ICONS } from '../constants';
 import { getRoboHint, getWinMessage } from '../services/geminiService';
@@ -7,7 +7,7 @@ import { playSound } from '../utils/sound';
 export const useGameLogic = (initialLevel: LevelConfig, isMuted: boolean = false) => {
     const [level, setLevel] = useState<LevelConfig>(initialLevel);
     const [playerPos, setPlayerPos] = useState<Position>(initialLevel.startPos);
-    const [playerRotation, setPlayerRotation] = useState<number>(0); // 0: Up, 90: Right, 180: Down, 270: Left
+    const [playerRotation, setPlayerRotation] = useState<number>(0);
     const [commands, setCommands] = useState<Command[]>([]);
     const [gameState, setGameState] = useState<GameState>(GameState.MENU);
     const [collectedStars, setCollectedStars] = useState<string[]>([]);
@@ -15,7 +15,17 @@ export const useGameLogic = (initialLevel: LevelConfig, isMuted: boolean = false
     const [modalMessage, setModalMessage] = useState<string>('');
     const [hintMessage, setHintMessage] = useState<string>('');
 
-    // Reset state when level changes
+    // Refs for mutable state in loop
+    const playerPosRef = useRef(initialLevel.startPos);
+    const collectedStarsRef = useRef<string[]>([]);
+    const gameStateRef = useRef(GameState.MENU);
+    const commandsRef = useRef<Command[]>([]);
+
+    // Sync refs with state
+    useEffect(() => {
+        commandsRef.current = commands;
+    }, [commands]);
+
     useEffect(() => {
         setLevel(initialLevel);
         resetLevel();
@@ -23,9 +33,16 @@ export const useGameLogic = (initialLevel: LevelConfig, isMuted: boolean = false
 
     const resetLevel = () => {
         setPlayerPos(initialLevel.startPos);
+        playerPosRef.current = initialLevel.startPos;
+
         setPlayerRotation(0);
+
         setCollectedStars([]);
+        collectedStarsRef.current = [];
+
         setGameState(GameState.PLAYING);
+        gameStateRef.current = GameState.PLAYING;
+
         setCurrentCommandIndex(-1);
         setModalMessage('');
         setHintMessage('');
@@ -43,7 +60,7 @@ export const useGameLogic = (initialLevel: LevelConfig, isMuted: boolean = false
             id: Math.random().toString(36).substr(2, 9),
             direction,
         };
-        setCommands([...commands, newCommand]);
+        setCommands(prev => [...prev, newCommand]);
     };
 
     const clearCommands = () => {
@@ -55,6 +72,7 @@ export const useGameLogic = (initialLevel: LevelConfig, isMuted: boolean = false
     const runCommands = () => {
         if (commands.length === 0) return;
         setGameState(GameState.RUNNING);
+        gameStateRef.current = GameState.RUNNING;
         setCurrentCommandIndex(-1);
         playSound('CLICK', isMuted);
     };
@@ -65,20 +83,25 @@ export const useGameLogic = (initialLevel: LevelConfig, isMuted: boolean = false
 
         let step = 0;
         const interval = setInterval(async () => {
-            if (step >= commands.length) {
+            // Check if game is still running (might have been stopped by win/loss)
+            if (gameStateRef.current !== GameState.RUNNING) {
+                clearInterval(interval);
+                return;
+            }
+
+            if (step >= commandsRef.current.length) {
                 clearInterval(interval);
                 handleGameOver(false, "Yah, perintahnya sudah habis tapi belum sampai rumah.");
                 return;
             }
 
             setCurrentCommandIndex(step);
-            const cmd = commands[step];
+            const cmd = commandsRef.current[step];
 
-            // Calculate new position
-            let newPos = { ...playerPos };
-            let newRotation = playerRotation;
+            // Calculate new position using Ref
+            let newPos = { ...playerPosRef.current };
+            let newRotation = 0;
 
-            // Update rotation based on direction for visual flair
             switch (cmd.direction) {
                 case Direction.UP: newRotation = 0; break;
                 case Direction.RIGHT: newRotation = 90; break;
@@ -112,15 +135,17 @@ export const useGameLogic = (initialLevel: LevelConfig, isMuted: boolean = false
                 return;
             }
 
-            // Valid move
+            // Valid move - Update Ref and State
+            playerPosRef.current = newPos;
             setPlayerPos(newPos);
             playSound('MOVE', isMuted);
 
             // Check collectibles
             if (tile === TileType.STAR) {
                 const starKey = `${newPos.x},${newPos.y}`;
-                if (!collectedStars.includes(starKey)) {
-                    setCollectedStars(prev => [...prev, starKey]);
+                if (!collectedStarsRef.current.includes(starKey)) {
+                    collectedStarsRef.current.push(starKey);
+                    setCollectedStars([...collectedStarsRef.current]);
                     playSound('COLLECT', isMuted);
                 }
             }
@@ -129,8 +154,7 @@ export const useGameLogic = (initialLevel: LevelConfig, isMuted: boolean = false
             if (tile === TileType.GOAL) {
                 clearInterval(interval);
 
-                // Hack: check if we JUST collected a star on this tile
-                const currentStarsCount = collectedStars.length;
+                const currentStarsCount = collectedStarsRef.current.length;
 
                 if (currentStarsCount >= level.minStarsToWin) {
                     handleGameOver(true, await getWinMessage(currentStarsCount));
@@ -141,25 +165,26 @@ export const useGameLogic = (initialLevel: LevelConfig, isMuted: boolean = false
             }
 
             step++;
-        }, 800); // Speed of steps
+        }, 800);
 
         return () => clearInterval(interval);
-    }, [gameState, commands, playerPos, level, collectedStars, playerRotation, isMuted]);
+    }, [gameState, level, isMuted]); // Removed commands, playerPos, collectedStars from deps
 
     const handleGameOver = async (win: boolean, message: string) => {
         if (win) {
             setGameState(GameState.WON);
+            gameStateRef.current = GameState.WON;
             playSound('WIN', isMuted);
 
-            // Update max unlocked level
             const currentMax = parseInt(localStorage.getItem('kode-petualang-level') || '1');
             if (level.id >= currentMax) {
                 localStorage.setItem('kode-petualang-level', (level.id + 1).toString());
             }
         } else {
             setGameState(GameState.LOST);
+            gameStateRef.current = GameState.LOST;
             playSound('LOSE', isMuted);
-            const hint = await getRoboHint(level, commands, message, playerPos);
+            const hint = await getRoboHint(level, commandsRef.current, message, playerPosRef.current);
             setHintMessage(hint);
         }
         setModalMessage(message);
