@@ -68,9 +68,6 @@ export const Controls: React.FC<ControlsProps> = ({
       <div className="order-1 md:order-2 col-span-2 bg-white/90 rounded-2xl p-3 md:p-4 shadow-sm md:shadow-xl flex-grow flex flex-col min-h-[90px] md:min-h-[200px] border-b-4 border-yellow-200">
         <div className="flex justify-between items-center mb-1 md:mb-2">
           <h3 className="font-bold text-gray-500 text-sm md:text-sm">Program ({commands.length}/{maxCommands})</h3>
-          <button onClick={onClear} disabled={isRunning} className="text-red-400 hover:text-red-600 p-1">
-            <Trash2 size={20} className="md:w-5 md:h-5" />
-          </button>
         </div>
 
         <div className="bg-gray-50 rounded-xl p-2 flex-grow overflow-x-auto md:overflow-y-auto md:overflow-x-hidden custom-scroll flex flex-row md:flex-col gap-3 items-center md:items-stretch">

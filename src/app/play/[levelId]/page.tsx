@@ -30,6 +30,7 @@ export default function GamePage({ params }: { params: Promise<{ levelId: string
         addCommand,
         clearCommands,
         resetLevel,
+        resetAndClear,
         runCommands
     } = useGameLogic(currentLevel || LEVELS[0], isMuted);
 
@@ -89,7 +90,7 @@ export default function GamePage({ params }: { params: Promise<{ levelId: string
                     <Controls
                         onAddCommand={addCommand}
                         onRun={runCommands}
-                        onReset={resetLevel}
+                        onReset={resetAndClear}
                         onClear={clearCommands}
                         commands={commands}
                         gameState={gameState}

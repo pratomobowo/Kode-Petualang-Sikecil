@@ -191,6 +191,11 @@ export const useGameLogic = (initialLevel: LevelConfig, isMuted: boolean = false
         setModalMessage(message);
     };
 
+    const resetAndClear = () => {
+        resetLevel();
+        setCommands([]);
+    };
+
     return {
         level,
         playerPos,
@@ -204,6 +209,7 @@ export const useGameLogic = (initialLevel: LevelConfig, isMuted: boolean = false
         addCommand,
         runCommands,
         resetLevel,
+        resetAndClear,
         clearCommands,
         setGameState,
     };
